@@ -30,6 +30,16 @@ public class Deck : MonoBehaviour
         return _deckCards[index];
     }
 
+    /// Debug helper: swaps a card so it will be drawn at the given 1-based
+    /// draw position (draws come from the end of the list).
+    public void SwapToDrawPosition(Card card, int drawPosition)
+    {
+        int target = _deckCards.Count - drawPosition;
+        int current = _deckCards.IndexOf(card);
+        if (current < 0 || target < 0 || target >= _deckCards.Count || current == target) return;
+        (_deckCards[current], _deckCards[target]) = (_deckCards[target], _deckCards[current]);
+    }
+
     public void Shuffle() {
         List<Card> temp = new List<Card>();
         // Shuffle the deck first

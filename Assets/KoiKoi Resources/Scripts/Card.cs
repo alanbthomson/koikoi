@@ -180,20 +180,49 @@ public class Card : MonoBehaviour {
     #endif
     }
 
+    private ParticleSystem[] matchParticles;
+
+    public void SetMatchHighlight(bool highlighted)
+    {
+        matchParticles ??= GetComponentsInChildren<ParticleSystem>(true);
+        Transform highlightRoot = transform.Find("Particle shape");
+        if (highlighted && highlightRoot != null)
+        {
+            highlightRoot.gameObject.SetActive(true);
+        }
+        foreach (ParticleSystem effect in matchParticles)
+        {
+            if (highlighted)
+            {
+                // A particle child cannot play while any parent under the card is inactive.
+                for (Transform parent = effect.transform.parent; parent != null && parent != transform; parent = parent.parent)
+                {
+                    parent.gameObject.SetActive(true);
+                }
+                effect.gameObject.SetActive(true);
+                if (!effect.isPlaying) effect.Play(false);
+            }
+            else
+            {
+                effect.Stop(false, ParticleSystemStopBehavior.StopEmittingAndClear);
+                effect.gameObject.SetActive(false);
+            }
+        }
+        if (!highlighted && highlightRoot != null)
+        {
+            highlightRoot.gameObject.SetActive(false);
+        }
+    }
+
     public void Start()
     {
-        gameManager = GameObject.FindFirstObjectByType<KoiKoiGameManager>();
+        if (gameManager == null) gameManager = GameObject.FindFirstObjectByType<KoiKoiGameManager>();
     }
 
     public void OnMouseDown()
     {
-        // select player card
-        if (gameManager.playerTurn && gameManager.playerHandCards.Contains(this) && !gameManager.timeToDraw)
-        {
-            gameManager.SetCardSelectedBool(this);
-        }
-        // select opponent card
-        if (gameManager.opponentTurn && gameManager.opponentHandCards.Contains(this) && !gameManager.timeToDraw)
+        // select current player's card
+        if (gameManager.CurrentPlayer.HandCards.Contains(this) && !gameManager.timeToDraw)
         {
             gameManager.SetCardSelectedBool(this);
         }
@@ -203,8 +232,7 @@ public class Card : MonoBehaviour {
         {
             // prevent matching opponent's card during player's turn and vice versa
             // also the deck?? Wow.
-            if (((gameManager.playerTurn && !gameManager.opponentHandCards.Contains(this)) ||
-                (gameManager.opponentTurn && !gameManager.playerHandCards.Contains(this))) &&
+            if (!gameManager.WaitingPlayer.HandCards.Contains(this) &&
                 !gameManager.deckCards.Contains(this))
             {
                 gameManager.Match(this);   
@@ -212,7 +240,7 @@ public class Card : MonoBehaviour {
             return;
         }
         // draw from deck
-        if (gameManager.timeToDraw && gameManager.deckCards.Contains(this) && gameManager.selectedCard == null)
+        if (gameManager.timeToDraw && gameManager.deckCards.Contains(this) && gameManager.selectedCard == null && !gameManager.isDrawingFromDeck)
         {
             gameManager.DrawFromDeck();
             return;

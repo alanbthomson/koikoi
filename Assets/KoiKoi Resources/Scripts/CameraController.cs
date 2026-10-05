@@ -20,6 +20,10 @@ public class CameraController : MonoBehaviour
     private bool showingOpponentMatches = false;
     private Coroutine moveCoroutine;
 
+    /// Fired when the camera switches to or from a matches view.
+    /// True = viewing matches (hide game UI), false = back to the table.
+    public event System.Action<bool> OnViewToggled;
+
     public void ToggleView()
     {
         showingMatches = !showingMatches;
@@ -30,6 +34,7 @@ public class CameraController : MonoBehaviour
             StopCoroutine(moveCoroutine);
 
         moveCoroutine = StartCoroutine(MoveCamera(showingMatches));
+        OnViewToggled?.Invoke(showingMatches);
 
         // Update button label
         if (buttonText != null)
@@ -48,6 +53,7 @@ public class CameraController : MonoBehaviour
             StopCoroutine(moveCoroutine);
 
         moveCoroutine = StartCoroutine(MoveCameraToOpponentMatches(showingOpponentMatches));
+        OnViewToggled?.Invoke(showingOpponentMatches);
 
         // Update button label
         if (opponentButtonText != null)

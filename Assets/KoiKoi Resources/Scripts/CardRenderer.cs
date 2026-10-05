@@ -9,9 +9,10 @@ public class CardRenderer : MonoBehaviour {
     private MaterialPropertyBlock contentMaterialProperties;
     private MaterialPropertyBlock outlineMaterialProperties;
     private MaterialPropertyBlock particleMaterialProperties;
-    private ParticleSystem particleSystem;
+    private ParticleSystem outlineParticles;
 
-    void Start() {
+    void Awake() {
+        if (particles != null) outlineParticles = particles.GetComponent<ParticleSystem>();
         contentMaterialProperties = new MaterialPropertyBlock();
         outlineMaterialProperties = new MaterialPropertyBlock();
         particleMaterialProperties = new MaterialPropertyBlock();
@@ -19,8 +20,9 @@ public class CardRenderer : MonoBehaviour {
 
     public void SetOutlineEnabled(bool enabled) {
         outline.enabled = enabled;
-        if (enabled) particleSystem.Play();
-        else particleSystem.Pause();
+        if (outlineParticles == null) return;
+        if (enabled) outlineParticles.Play();
+        else outlineParticles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
     }
 
     public void SetOutlineColor(Color color) {
@@ -28,6 +30,6 @@ public class CardRenderer : MonoBehaviour {
         particleMaterialProperties.SetColor("_EmissionColor", color);
         
         outline.SetPropertyBlock(outlineMaterialProperties);
-        particles.SetPropertyBlock(particleMaterialProperties);
+        if (particles != null) particles.SetPropertyBlock(particleMaterialProperties);
     }
 }
